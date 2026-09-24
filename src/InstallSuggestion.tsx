@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Download, Smartphone, X } from "lucide-react";
 
@@ -44,6 +44,25 @@ window.addEventListener("appinstalled", () => {
   installedThisVisit = true;
   window.dispatchEvent(new Event(changed));
 });
+
+function InstallPopup({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    // A late browser installation event must not interrupt an ongoing entry.
+    if (document.activeElement?.matches('input, textarea, select')) return;
+    const element = dialog.current;
+    const previousOverflow = document.body.style.overflow;
+    element?.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => {
+      element?.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+  return <dialog ref={dialog} className="install-suggestion" aria-labelledby="install-title" aria-describedby="install-description" onCancel={(event) => { event.preventDefault(); onClose(); }}>
+    {children}
+  </dialog>;
+}
 
 export default function InstallSuggestion() {
   const [, refresh] = useState(0);
@@ -102,11 +121,11 @@ export default function InstallSuggestion() {
     }
   };
   return (
-    <aside className="install-suggestion" aria-label="Instalar RotaFrota">
+    <InstallPopup onClose={() => dismiss()}>
       <Smartphone size={30} aria-hidden="true" />
       <div className="install-copy">
-        <strong>Tenha o RotaFrota na tela inicial</strong>
-        <p>
+        <h2 id="install-title">Instale o RotaFrota</h2>
+        <p id="install-description">
           Abra pelo ícone do celular para registrar sua viagem com mais
           facilidade.
         </p>
@@ -123,6 +142,7 @@ export default function InstallSuggestion() {
               ? "Instalar aplicativo"
               : "Como instalar no iPhone"}
         </button>}
+        <button className="install-later" type="button" onClick={() => dismiss()}>Agora não</button>
         {help && (
           <div className="install-help">
             <p>
@@ -145,6 +165,6 @@ export default function InstallSuggestion() {
       >
         <X size={22} />
       </button>
-    </aside>
+    </InstallPopup>
   );
 }

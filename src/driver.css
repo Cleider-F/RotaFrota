@@ -494,3 +494,15 @@
 .install-suggestion button:focus-visible { outline: 3px solid #397a58; outline-offset: 3px; }
 @media (max-width: 420px) { .install-suggestion { padding: 14px; gap: 8px; } .install-suggestion > svg { display: none; } }
 @media (display-mode: standalone), (display-mode: fullscreen) { .install-suggestion { display: none; } }
+
+/* Native modal: keyboard focus stays inside; Escape postpones the reminder. */
+dialog.install-suggestion { position: fixed; inset: 0; box-sizing: border-box; width: calc(100% - 32px); max-width: 460px; max-height: calc(100dvh - 40px); margin: auto; overflow-y: auto; padding: 32px 24px 24px; border: 1px solid #d6e4cf; border-radius: 22px; background: #f6faf1; color: #203e34; box-shadow: 0 24px 80px #0004; }
+dialog.install-suggestion:not([open]) { display: none; }
+dialog.install-suggestion[open] { display: block; }
+dialog.install-suggestion::backdrop { background: #102d25a6; backdrop-filter: blur(3px); }
+dialog.install-suggestion > svg { display: block; margin-bottom: 18px; width: 42px; height: 42px; }
+.install-copy h2 { font-size: 26px; letter-spacing: -.6px; line-height: 1.25; margin: 0 32px 12px 0; }
+dialog.install-suggestion .install-copy p { font-size: 16px; margin-bottom: 22px; }
+dialog.install-suggestion .install-dismiss { position: absolute; top: 12px; right: 12px; margin: 0; }
+.install-later { min-height: 50px; margin-top: 10px; width: 100%; border: 1px solid #ccd9c7; border-radius: 10px; background: transparent; color: #234d3c; font: inherit; font-weight: 700; cursor: pointer; }
+@media (display-mode: standalone), (display-mode: fullscreen) { dialog.install-suggestion[open] { display: none; } }
