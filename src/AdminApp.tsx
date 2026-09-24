@@ -35,7 +35,8 @@ import {
 } from "./domain";
 import { TripModal, VehicleModal, Login } from "./components";
 import TechniciansPanel from "./TechniciansPanel";
-type Page = "overview" | "trips" | "vehicles" | "settings" | "technicians";
+import BiPanel from "./BiPanel";
+type Page = "overview" | "trips" | "vehicles" | "settings" | "technicians" | "bi";
 export default function AdminApp() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [who, setWho] = useState<Member | null>(null),
@@ -214,6 +215,7 @@ export default function AdminApp() {
                 <LayoutDashboard size={19} />
                 Visão geral
               </button>
+              <button className={page === 'bi' ? 'selected' : ''} onClick={() => nav('bi')}><BarChart3 size={19}/>BI da operação</button>
               <button
                 className={page === "trips" ? "selected" : ""}
                 onClick={() => nav("trips")}
@@ -278,6 +280,7 @@ export default function AdminApp() {
               {
                 {
                   overview: "Visão geral",
+                  bi: "BI da operação",
                   trips: "Viagens",
                   vehicles: "Veículos",
                   settings: "Aplicativo",
@@ -333,6 +336,7 @@ export default function AdminApp() {
                 {
                   {
                     overview: "Sua operação, por inteiro.",
+                    bi: "Os números da sua operação.",
                     trips: "Cada viagem, em detalhe.",
                     vehicles: "Veículos da frota.",
                     settings: "Seu aplicativo, onde estiver.",
@@ -346,6 +350,7 @@ export default function AdminApp() {
                     overview:
                       "Acompanhe viagens, abastecimentos e a eficiência da sua frota.",
                     trips: "Do primeiro quilômetro à última evidência.",
+                    bi: "Explore os resultados da frota e aprofunde a análise por veículo ou motorista.",
                     vehicles: "Os veículos que movimentam sua operação.",
                     settings: "Instale no celular e acompanhe sua operação.",
                     technicians: "Cadastre técnicos e gerencie as permissões de acesso.",
@@ -672,6 +677,7 @@ export default function AdminApp() {
               </div>
             </section>
           )}
+          {page === 'bi' && <BiPanel trips={trips} onOpenTrip={trip => setModal({type:'detail',trip})} />}
           {page === 'technicians' && who.canManageTechnicians && <TechniciansPanel />}
           {page === "vehicles" && (
             <div className="vehicle-grid">
