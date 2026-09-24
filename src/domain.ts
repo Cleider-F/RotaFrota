@@ -35,6 +35,8 @@ export type Trip = {
   endKm?: number;
   endPhoto?: string;
   endedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
   notes: string;
   version: number;
 };
@@ -58,10 +60,11 @@ export const date = (s: string) =>
   });
 export const totalLiters = (t: Trip) =>
   t.fills.reduce((sum, f) => sum + f.liters, 0);
+export const isTripActive = (t: Trip) => !t.endedAt && !t.cancelledAt;
 export const distance = (t: Trip) =>
   (t.endKm ?? t.fills.at(-1)?.odometer ?? t.startKm) - t.startKm;
 export function estimatedEfficiency(t: Trip) {
-  const liters = t.endedAt ? totalLiters(t) : 0,
+  const liters = t.endedAt && !t.cancelledAt ? totalLiters(t) : 0,
     km = liters > 0 ? distance(t) : 0;
   return { liters, km, value: liters > 0 ? km / liters : null };
 }
@@ -70,6 +73,7 @@ export function efficiency(t: Trip): {
   liters: number;
   value: number | null;
 } {
+  if (t.cancelledAt) return {km:0,liters:0,value:null};
   let baseline: number | null = t.startFull ? t.startKm : null;
   let pending = 0,
     km = 0,
@@ -122,6 +126,11 @@ export function validateTrip(t: Trip) {
       throw new Error("Data de abastecimento inválida.");
     km = f.odometer;
     at = f.at;
+  }
+  if (t.cancelledAt !== undefined || t.cancellationReason !== undefined) {
+    if (typeof t.cancelledAt !== 'string' || !Number.isFinite(Date.parse(t.cancelledAt)) || new Date(t.cancelledAt) < new Date(at)) throw new Error('Data de cancelamento inválida.');
+    if (typeof t.cancellationReason !== 'string' || t.cancellationReason.trim().length < 5 || t.cancellationReason.length > 500) throw new Error('Informe o motivo do cancelamento, entre 5 e 500 caracteres.');
+    if (t.endedAt || t.endKm !== undefined || t.endPhoto) throw new Error('Uma viagem não pode estar concluída e cancelada ao mesmo tempo.');
   }
   if (t.endKm !== undefined) {
     if (!Number.isFinite(t.endKm) || t.endKm < km || t.endKm > 9999999)

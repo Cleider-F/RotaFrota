@@ -135,7 +135,7 @@ export default function AdminApp() {
   if (!who || who.role !== "technician")
     return <Login onLogin={init} error={error} />;
   const tech = who.role === "technician";
-  const active = trips.filter((t) => !t.endedAt),
+  const active = trips.filter((t) => !t.endedAt && !t.cancelledAt),
     cutoff = Date.now() - Number(period) * 86400000;
   const periodTrips = trips.filter(
     (t) => new Date(t.startedAt).getTime() >= cutoff,
@@ -143,7 +143,7 @@ export default function AdminApp() {
   const scoped = periodTrips;
   const visible = scoped.filter(
     (t) =>
-      (filter === "all" || (filter === "active" ? !t.endedAt : !!t.endedAt)) &&
+      (filter === "all" || (filter === "active" ? !t.endedAt && !t.cancelledAt : filter === "cancelled" ? !!t.cancelledAt : !!t.endedAt)) &&
       `${t.driver} ${t.invoice} ${t.plate}`
         .toLowerCase()
         .includes(search.toLowerCase()),
@@ -543,7 +543,7 @@ export default function AdminApp() {
                     Acompanhe os registros e abra os detalhes de cada viagem.
                   </p>
                 </div>
-                <button className="secondary" onClick={exportCsv}>
+                <button className="secondary" onClick={exportCsv} title="O CSV operacional não inclui viagens canceladas">
                   <Download size={16} />
                   Exportar CSV
                 </button>
@@ -553,7 +553,7 @@ export default function AdminApp() {
                   {[
                     ["all", "Todas"],
                     ["active", "Em andamento"],
-                    ["done", "Concluídas"],
+                    ["done", "Concluídas"], ["cancelled", "Canceladas"],
                   ].map(([v, label]) => (
                     <button
                       className={filter === v ? "active" : ""}
@@ -630,10 +630,10 @@ export default function AdminApp() {
                           </td>
                           <td>
                             <span
-                              className={`badge ${t.endedAt ? "done" : "running"}`}
+                              className={`badge ${t.cancelledAt ? "cancelled" : t.endedAt ? "done" : "running"}`}
                             >
                               {t.endedAt ? <Check size={12} /> : <span />}
-                              {t.endedAt ? "Concluída" : "Em viagem"}
+                              {t.cancelledAt ? "Cancelada" : t.endedAt ? "Concluída" : "Em viagem"}
                             </span>
                           </td>
                           <td>
@@ -868,4 +868,3 @@ function Metric({
     </section>
   );
 }
-

@@ -27,7 +27,8 @@ export default function AuditDetails({
     });
     values["Hodômetro final"] =
       t.endKm === undefined ? "Não encerrada" : `${number(t.endKm)} km`;
-    values["Encerramento"] = t.endedAt ? date(t.endedAt) : "Em andamento";
+    values["Encerramento"] = t.cancelledAt ? `Cancelada em ${date(t.cancelledAt)}` : t.endedAt ? date(t.endedAt) : "Em andamento";
+    values["Motivo de cancelamento"] = t.cancellationReason || "—";
     return values;
   };
   const before = describe(entry.before),

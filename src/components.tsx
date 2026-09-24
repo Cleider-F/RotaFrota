@@ -347,8 +347,8 @@ export function TripModal({
           {readonly ? (
             <>
               <div className="detail-summary">
-                <span className={`badge ${trip?.endedAt ? "done" : "running"}`}>
-                  {trip?.endedAt ? "Concluída" : "Em viagem"}
+                <span className={`badge ${trip?.cancelledAt ? "cancelled" : trip?.endedAt ? "done" : "running"}`}>
+                  {trip?.cancelledAt ? "Cancelada" : trip?.endedAt ? "Concluída" : "Em viagem"}
                 </span>
                 <h3>Nota nº {draft.invoice}</h3>
                 <p>
@@ -359,7 +359,7 @@ export function TripModal({
                   {draft.endedAt && ` · Fim: ${date(draft.endedAt)}`}
                 </small>
               </div>
-              <div className="detail-stats">
+              {draft.cancelledAt && <div className="alert"><b>Cancelada em {date(draft.cancelledAt)}</b><p>Motivo: {draft.cancellationReason}</p></div>}<div className="detail-stats">
                 <div>
                   <small>Distância registrada</small>
                   <b>{number(distance(draft))} km</b>
@@ -1075,4 +1075,3 @@ export function Login({
     </div>
   );
 }
-

@@ -84,6 +84,36 @@ try {
   await save();
   trip.version = 3;
   console.log("PASS trip completion");
+  const cancelledTrip = { ...trip, id: crypto.randomUUID(), version: 0, fills: [], startedAt: new Date().toISOString() };
+  delete cancelledTrip.endKm;
+  delete cancelledTrip.endPhoto;
+  delete cancelledTrip.endedAt;
+  const saveCancellation = (value) => call("rotafrotaSaveTrip", { tenantId, trip: value, reason: "Teste de cancelamento em homologação" });
+  await saveCancellation(cancelledTrip);
+  cancelledTrip.version = 1;
+  cancelledTrip.fills = [...trip.fills];
+  cancelledTrip.fills[0] = { ...cancelledTrip.fills[0], at: new Date().toISOString() };
+  await saveCancellation(cancelledTrip);
+  cancelledTrip.version = 2;
+  cancelledTrip.cancelledAt = new Date().toISOString();
+  cancelledTrip.cancellationReason = "Veículo de teste interrompido — homologação";
+  await saveCancellation(cancelledTrip);
+  cancelledTrip.version = 3;
+  console.log("PASS cancellation preserves refuel without final evidence");
+  const reopened = { ...cancelledTrip };
+  delete reopened.cancelledAt;
+  delete reopened.cancellationReason;
+  try {
+    await saveCancellation(reopened);
+    throw new Error("REOPEN WAS ALLOWED");
+  } catch (e) {
+    if (e.message === "REOPEN WAS ALLOWED") throw e;
+    if (!String(e.code).startsWith("functions/")) throw e;
+  }
+  const following = { ...reopened, id: crypto.randomUUID(), version: 0, fills: [], startedAt: new Date().toISOString() };
+  await saveCancellation(following);
+  await saveCancellation({ ...following, version: 1, cancelledAt: new Date().toISOString(), cancellationReason: "Encerramento do teste de liberação da placa" });
+  console.log("PASS cancellation releases driver and plate for a new trip");
   const mine = await getDocs(
     query(
       collection(db, `rotafrota_companies/${tenantId}/trips`),
@@ -92,6 +122,8 @@ try {
   );
   if (!mine.docs.some((d) => d.id === trip.id && d.data().data.version === 3))
     throw new Error("Trip not persisted");
+  if (!mine.docs.some((d) => d.id === cancelledTrip.id && d.data().data.cancelledAt && d.data().data.fills.length === 1))
+    throw new Error("Cancellation and evidence not persisted");
   console.log("PASS authenticated own-trip query");
   try {
     await getDocs(collection(db, `rotafrota_companies/${tenantId}/trips`));

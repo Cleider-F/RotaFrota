@@ -31,3 +31,9 @@ Menu Operação > BI da operação, disponível para técnicos e administradores
 Gráficos clicáveis por veículo/motorista selecionam o recorte e levam ao resumo; barras diárias filtram viagens iniciadas naquele dia. Rankings mostram até dez itens, com seleção completa pelos filtros. Agrupamento de motoristas usa nome digitado normalizado, pois ID anônimo identifica aparelho, não pessoa: homônimos podem ser agrupados. Tabela abre detalhes/fotos/correções e exporta o CSV padrão apenas do recorte. Consulta usa os dados já autorizados do painel e acompanha atualizações recebidas; não cria acesso novo no Firebase.
 
 Testes: agregação ponderada, viagens abertas, ausência de litros, filtros combinados e virada de data em Brasília. Verificação visual em demonstração: navegação do geral para veículo, motorista, abertura da viagem e largura de celular. Consultas ainda são carregadas no cliente; agregações no servidor ficam para frotas maiores.
+
+## Cancelamento de viagens
+
+Motorista confirma o cancelamento com motivo de 5 a 500 caracteres. O registro e suas evidências são preservados, com data e motivo disponíveis no painel técnico e na auditoria. A viagem não pode ser retomada. Canceladas têm filtro próprio no painel/BI; seus litros e distância conhecida continuam nos totais, mas são excluídas do rendimento e do CSV operacional de nove colunas.
+
+Validação: 35 testes passaram, com sete testes de emuladores ignorados nesta execução; build de produção aprovado. Integração Firebase em rotafrota-homologacao confirmou cancelamento com abastecimento preservado, recusa de reabertura e nova viagem para o mesmo motorista/placa. Função rotafrotaSaveTrip atualizada. Fluxo visual demo confirmou desistência da confirmação e cancelamento retornando ao formulário de nova viagem.

@@ -225,11 +225,11 @@ export async function saveTrip(t: Trip, who: Member, reason: string) {
     }
     const others = (await tx.objectStore("trips").getAll()) as Trip[];
     if (
-      !t.endedAt &&
+      !t.endedAt && !t.cancelledAt &&
       others.some(
         (x) =>
           x.id !== t.id &&
-          !x.endedAt &&
+          !x.endedAt && !x.cancelledAt &&
           (x.plate === t.plate || x.driverId === t.driverId),
       )
     ) {

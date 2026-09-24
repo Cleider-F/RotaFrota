@@ -18,7 +18,7 @@ export function tripsToCsv(trips: Trip[]): string {
   const rows: unknown[][] = [
     ['CONTROLE DE KM E COMBUSTIVEL', ...Array(8).fill('')],
     tripCsvColumns,
-    ...trips.map(trip => {
+    ...trips.filter(trip => !trip.cancelledAt).map(trip => {
       const start = new Date(trip.startedAt);
       const finished = !!trip.endedAt && trip.endKm !== undefined;
       return [

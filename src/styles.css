@@ -2203,3 +2203,4 @@ td {
 .admin-logout:hover { background: #fff1ee; }
 .admin-logout:focus-visible { outline: 3px solid #397a58; outline-offset: 3px; }
 .admin-logout:disabled { opacity: .6; cursor: wait; }
+.badge.cancelled { color: #923f37; background: #f9e7e2; }

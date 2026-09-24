@@ -70,6 +70,8 @@ export function EvidenceInput({
   );
 }
 export default function DriverApp() {
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [who, setWho] = useState<Member | null>(null),
     [trips, setTrips] = useState<Trip[]>([]),
     [step, setStep] = useState<Step>("home");
@@ -122,7 +124,7 @@ export default function DriverApp() {
       setError,
     );
   }, [who]);
-  const active = trips.find((t) => !t.endedAt),
+  const active = trips.find((t) => !t.endedAt && !t.cancelledAt),
     formStep = step === "home" && !active ? "start" : step;
   const choose = (next: Step) => {
     setStep(next);
@@ -238,6 +240,22 @@ export default function DriverApp() {
       setBusy(false);
     }
   };
+  const cancelTrip = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!who || !active || submitting.current) return;
+    submitting.current = true; setBusy(true); setError('');
+    try {
+      const next = {...active,cancelledAt:new Date().toISOString(),cancellationReason:cancelReason.trim()};
+      validateTrip(next);
+      await api.saveTrip(next,who,`Cancelamento: ${cancelReason.trim()}`.slice(0,500));
+      setTrips(previous => previous.map(t => t.id === next.id ? next : t));
+      setCancelling(false); setCancelReason(''); choose('home');
+      newId.current = crypto.randomUUID();
+      setMessage('Viagem cancelada. Os registros foram preservados. Você pode iniciar outra viagem.');
+      await refresh(who);
+    } catch(e) {setError(api.friendlyError(e));}
+    finally {submitting.current=false;setBusy(false);}
+  };
   return (
     <div className="driver-app">
       <header className="driver-header">
@@ -309,6 +327,7 @@ export default function DriverApp() {
                 <div className="driver-big-actions">
                   <button
                     className="driver-action fuel"
+                    disabled={busy}
                     onClick={() => choose("fill")}
                   >
                     <span className="action-symbol">
@@ -322,6 +341,7 @@ export default function DriverApp() {
                   </button>
                   <button
                     className="driver-action finish"
+                    disabled={busy}
                     onClick={() => choose("finish")}
                   >
                     <span className="action-symbol">
@@ -338,6 +358,12 @@ export default function DriverApp() {
                   Pode abastecer mais de uma vez. Envie um registro a cada
                   parada.
                 </p>
+                {!cancelling ? <button className="driver-cancel-button" onClick={()=>{setCancelling(true);setCancelReason('');setError('');}}>Cancelar viagem</button> : <form className="driver-cancel-card" onSubmit={cancelTrip}>
+                  <h2>Cancelar esta viagem?</h2><p>Use esta opção se a viagem foi interrompida. As fotos e os abastecimentos já enviados serão preservados. Depois de confirmar, não será possível continuar esta viagem.</p>
+                  <label>Por que a viagem foi cancelada?<textarea required minLength={5} maxLength={500} disabled={busy} value={cancelReason} onChange={e=>setCancelReason(e.target.value)} placeholder="Exemplo: veículo apresentou defeito e a viagem foi interrompida."/></label>
+                  <button className="driver-cancel-button" type="submit" disabled={busy}>{busy?'Cancelando…':'Confirmar cancelamento'}</button>
+                  <button className="driver-primary" type="button" disabled={busy} onClick={()=>setCancelling(false)}>Não cancelar — continuar viagem</button>
+                </form>}
               </>
             ) : (
               <>

@@ -38,6 +38,8 @@ Veja [implantação](docs/IMPLANTACAO.md), [validação](docs/VALIDACAO.md) e [e
 
 ## Indicadores e limites
 
+Durante uma viagem, o motorista pode usar **Cancelar viagem**, informar um motivo e confirmar. O cancelamento preserva fotos e abastecimentos, libera motorista/placa para uma nova viagem e aparece com data e motivo no painel técnico. Não é possível retomar uma viagem cancelada. O BI identifica canceladas separadamente; seus litros e distância conhecida permanecem nos totais, mas não entram no rendimento km/L. O CSV operacional de nove colunas exclui canceladas.
+
 Km/L estimado = distância de viagens concluídas dividida pelos litros abastecidos nessas viagens. A média é ponderada. Sem medição do combustível inicial/final, esse valor não comprova consumo real. Viagens abertas não entram nesse indicador.
 
 O motorista usa uma sessão anônima persistente no navegador. Limpar dados/trocar aparelho perde a associação local; o técnico continua vendo os registros. Há uma viagem ativa por sessão e placa. O nome digitado não autentica identidade pessoal. Cadastro público de sessões exige controles adicionais contra abuso antes de comercialização em escala.

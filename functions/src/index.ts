@@ -119,6 +119,7 @@ function checkShape(t: Trip) {
   if (t.vehicleId !== t.plate)
     throw new Error("A placa e o veículo devem coincidir.");
   if (
+    (t.cancelledAt && new Date(t.cancelledAt).getTime() > Date.now() + 300000) ||
     new Date(t.startedAt).getTime() > Date.now() + 300000 ||
     t.fills.some((f) => new Date(f.at).getTime() > Date.now() + 300000) ||
     (t.endedAt && new Date(t.endedAt).getTime() > Date.now() + 300000)
@@ -215,7 +216,7 @@ export const rotafrotaSaveTrip = onCall(async (request) => {
         : null;
     const oldState = oldPlate ? await transaction.get(oldPlate) : null;
     if (
-      !trip.endedAt &&
+      !trip.endedAt && !trip.cancelledAt &&
       ((driverState.exists && driverState.get("tripId") !== trip.id) ||
         (plateState.exists && plateState.get("tripId") !== trip.id))
     )
@@ -239,7 +240,7 @@ export const rotafrotaSaveTrip = onCall(async (request) => {
       before,
       after,
     });
-    if (trip.endedAt) {
+    if (trip.endedAt || trip.cancelledAt) {
       if (driverState.get("tripId") === trip.id) transaction.delete(driverLock);
       if (plateState.get("tripId") === trip.id) transaction.delete(plateLock);
     } else {
@@ -375,4 +376,3 @@ export const rotafrotaActivateAccount = onCall(async request => {
   });
   return {ok:true};
 });
-
