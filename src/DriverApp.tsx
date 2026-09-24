@@ -12,6 +12,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import * as api from "./data";
+import InstallSuggestion from "./InstallSuggestion";
 import { date, number, validateTrip, type Member, type Trip } from "./domain";
 type Step = "home" | "start" | "fill" | "finish";
 export function EvidenceInput({
@@ -249,6 +250,7 @@ export default function DriverApp() {
         <a className="area-switch" href="#/admin" aria-disabled={busy} onClick={(event) => { if (busy) event.preventDefault(); }}>Painel técnico <ArrowRight size={18} /></a>
       </header>
       <main className="driver-main">
+        <InstallSuggestion />
         {api.isDemo && (
           <div className="driver-demo">
             Demonstração · Os envios ficam somente neste navegador.
