@@ -210,6 +210,17 @@ export function TripModal({
           version: 0,
         },
   );
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const removeTrip = async () => {
+    if (!trip || busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true); setError('');
+    try {
+      await api.deleteTrip(trip);
+      onSaved('Viagem excluída.');
+    } catch (e) { setError(api.friendlyError(e)); }
+    finally { busyRef.current = false; setBusy(false); }
+  };
   const [editing, setEditing] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -449,6 +460,17 @@ export function TripModal({
                 </div>
               )}
               {draft.notes && <div className="info-note">{draft.notes}</div>}
+              {who.role === 'technician' && who.canManageTechnicians && (
+                <div className="trip-delete">
+                  {confirmDelete ? <>
+                    <h3>Excluir esta viagem?</h3>
+                    <p>Nota {draft.invoice} · {draft.driver} · {draft.plate}</p>
+                    <p>A viagem sairá das listas, gráficos e relatórios. Se estiver em andamento, o motorista precisará iniciar outra. Não será possível desfazer pelo aplicativo.</p>
+                    <button type="button" className="secondary" disabled={busy} onClick={()=>setConfirmDelete(false)}>Voltar sem excluir</button>
+                    <button type="button" className="delete-trip-button" disabled={busy} onClick={()=>void removeTrip()}>{busy ? 'Excluindo…' : 'Confirmar exclusão'}</button>
+                  </> : <button type="button" className="delete-trip-button" disabled={busy} onClick={()=>setConfirmDelete(true)}>Excluir viagem</button>}
+                </div>
+              )}
               {who.role === "technician" && (
                 <>
                   <div className="section-line">
@@ -456,6 +478,7 @@ export function TripModal({
                     <button
                       type="button"
                       className="secondary"
+                      disabled={busy || confirmDelete}
                       onClick={() => setEditing(true)}
                     >
                       <Pencil size={16} />

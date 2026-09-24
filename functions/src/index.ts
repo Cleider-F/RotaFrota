@@ -192,6 +192,8 @@ export const rotafrotaSaveTrip = onCall(async (request) => {
     }
   }
   return db.runTransaction(async (transaction) => {
+    const removed = await transaction.get(db.doc(`${base}/deletedTrips/${trip.id}`));
+    if (removed.exists) throw new HttpsError("not-found", "Esta viagem foi excluída pelo administrador.");
     const snapshot = await transaction.get(reference),
       before = snapshot.exists ? (snapshot.get("data") as Trip) : null;
     if ((before?.version ?? 0) !== trip.version)
@@ -250,6 +252,33 @@ export const rotafrotaSaveTrip = onCall(async (request) => {
     if (oldPlate && oldState?.get("tripId") === trip.id)
       transaction.delete(oldPlate);
     return { version: after.version };
+  });
+});
+export const rotafrotaDeleteTrip = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  signedIn(uid);
+  const {tenantId, tripId, version} = request.data ?? {};
+  if (!identifier(tenantId) || !identifier(tripId) || !Number.isInteger(version))
+    throw new HttpsError("invalid-argument", "Viagem inválida.");
+  return db.runTransaction(async tx => {
+    const member = await tx.get(db.doc(`rotafrota_members/${uid}`));
+    if (request.auth?.token.firebase?.sign_in_provider === 'anonymous' || member.get('active') !== true || member.get('role') !== 'technician' || member.get('canManageTechnicians') !== true || member.get('tenantId') !== tenantId)
+      throw new HttpsError('permission-denied', 'Somente administradores podem excluir viagens.');
+    const base = `rotafrota_companies/${tenantId}`;
+    const reference = db.doc(`${base}/trips/${tripId}`);
+    const snapshot = await tx.get(reference);
+    if (!snapshot.exists) throw new HttpsError('not-found', 'Esta viagem já foi excluída.');
+    const trip = snapshot.get('data') as Trip;
+    if (trip.version !== version) throw new HttpsError('aborted', 'A viagem foi alterada. Atualize a página antes de excluir.');
+    const driverLock = db.doc(`${base}/activeDrivers/${trip.driverId}`);
+    const plateLock = db.doc(`${base}/activePlates/${trip.plate}`);
+    const [driver, plate] = await Promise.all([tx.get(driverLock), tx.get(plateLock)]);
+    // Private removal record prevents stale clients from recreating this trip.
+    tx.create(db.doc(`${base}/deletedTrips/${tripId}`), {data:trip, deletedBy:uid, deletedAt:FieldValue.serverTimestamp()});
+    tx.delete(reference);
+    if (driver.get('tripId') === tripId) tx.delete(driverLock);
+    if (plate.get('tripId') === tripId) tx.delete(plateLock);
+    return {deleted:true};
   });
 });
 export const rotafrotaSaveVehicle = onCall(async (request) => {

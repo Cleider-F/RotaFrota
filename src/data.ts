@@ -203,6 +203,25 @@ function changed() {
   channel.postMessage("change");
   channel.close();
 }
+export async function deleteTrip(trip: Trip) {
+  const who = await member();
+  if (!who || who.role !== 'technician' || !who.canManageTechnicians)
+    throw new Error('Somente administradores podem excluir viagens.');
+  if (isDemo) {
+    const d = await seed(), tx = d.transaction(['trips', 'meta'], 'readwrite');
+    const before = await tx.objectStore('trips').get(trip.id) as Trip | undefined;
+    if (!before || before.version !== trip.version) {
+      tx.abort();
+      throw new Error('Esta viagem foi alterada ou excluída. Atualize a página.');
+    }
+    await tx.objectStore('meta').put({trip:before,deletedAt:new Date().toISOString()}, `deleted-trip:${trip.id}`);
+    await tx.objectStore('trips').delete(trip.id);
+    await tx.done;
+    changed();
+  } else {
+    await httpsCallable(fb.functions, 'rotafrotaDeleteTrip')({tenantId:who.tenantId,tripId:trip.id,version:trip.version});
+  }
+}
 export async function saveTrip(t: Trip, who: Member, reason: string) {
   validateTrip(t);
   if (reason.trim().length < 5)
@@ -211,8 +230,12 @@ export async function saveTrip(t: Trip, who: Member, reason: string) {
     if (who.role === "technician" && !(await member()))
       throw new Error("Entre no painel técnico.");
     const d = await seed(),
-      tx = d.transaction(["trips", "audit"], "readwrite"),
+      tx = d.transaction(["trips", "audit", "meta"], "readwrite"),
       before = (await tx.objectStore("trips").get(t.id)) as Trip | undefined;
+    if (await tx.objectStore('meta').get(`deleted-trip:${t.id}`)) {
+      tx.abort();
+      throw new Error('Esta viagem foi excluída pelo administrador.');
+    }
     if ((before?.version ?? 0) !== t.version) {
       tx.abort();
       throw new Error("Esta viagem foi alterada. Atualize e tente novamente.");

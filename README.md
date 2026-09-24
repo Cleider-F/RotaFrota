@@ -47,3 +47,7 @@ O motorista usa uma sessão anônima persistente no navegador. Limpar dados/troc
 Envios exigem internet; não há fila offline. Fotos são reduzidas a JPEG até 1.800 px, sem preservação do original. Uploads sem viagem confirmada podem deixar objetos sem referência; limpeza futura deve considerar também auditorias. Consultas ainda não são paginadas.
 
 PWA com cache da interface e configuração Capacitor presentes. Aplicativos nativos não foram compilados/publicados. Não há cobrança, gestão comercial de contratos, backup automatizado ou publicação web de produção nesta entrega.
+
+## Exclusão administrativa
+
+Nos detalhes da viagem, administradores podem usar Excluir viagem e confirmar identificando nota, motorista e placa. Técnicos comuns e motoristas não têm essa permissão. A viagem desaparece das consultas operacionais, BI e CSV, sem status de cancelamento; motorista e placa são liberados. Não há desfazer na interface. Internamente, o servidor mantém uma cópia privada em deletedTrips com autor/data da exclusão, além das evidências e auditorias existentes. Essa marca impede que uma tela antiga recrie o registro. Não é uma eliminação definitiva dos dados armazenados.
