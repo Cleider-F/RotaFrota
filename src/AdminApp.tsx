@@ -37,6 +37,7 @@ import { TripModal, VehicleModal, Login } from "./components";
 import TechniciansPanel from "./TechniciansPanel";
 type Page = "overview" | "trips" | "vehicles" | "settings" | "technicians";
 export default function AdminApp() {
+  const [loggingOut, setLoggingOut] = useState(false);
   const [who, setWho] = useState<Member | null>(null),
     [ready, setReady] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]),
@@ -265,11 +266,6 @@ export default function AdminApp() {
               <b>{who.name}</b>
               <small>{tech ? "Painel técnico" : "Motorista"}</small>
             </div>
-            {
-              <button aria-label="Sair" onClick={() => void api.logout()}>
-                <LogOut size={17} />
-              </button>
-            }
           </div>
         </div>
       </aside>
@@ -294,6 +290,14 @@ export default function AdminApp() {
             <span className={online && !api.isDemo ? "live-dot" : "demo-dot"} />
             {online ? status : "Sem conexão"}
           </div>
+          <button className="admin-logout" disabled={loggingOut} onClick={async () => {
+            setLoggingOut(true);
+            try {
+              await api.logout();
+              setWho(null); setTrips([]); setVehicles([]); setModal(null); setVehicleModal(false); setError('');
+            } catch (e) { setError(api.friendlyError(e)); }
+            finally { setLoggingOut(false); }
+          }}><LogOut size={19} />{loggingOut ? 'Saindo…' : 'Sair'}</button>
         </header>
         <main>
           {api.isDemo && (
