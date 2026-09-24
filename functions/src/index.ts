@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { randomBytes } from "node:crypto";
-import { requireAccessManager, validateTechnicianTarget } from "../../src/technician-policy";
+import { createHash } from "node:crypto";
+import { requireAccessManager, validateTechnicianTarget, requireVerifiedAuthorization } from "../../src/technician-policy";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -290,60 +290,88 @@ export const rotafrotaSaveVehicle = onCall(async (request) => {
   return { id: v.plate };
 });
 
-// Membership administration is server-only; ordinary technicians cannot delegate access.
-export const rotafrotaManageTechnicians = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  signedIn(uid);
+
+const emailKey = (email: string) => createHash('sha256').update(email).digest('hex');
+const normalizedEmail = (input: unknown) => {
+  const email = typeof input === 'string' ? input.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new HttpsError('invalid-argument', 'Informe um e-mail válido.');
+  return email;
+};
+const unauthorizedEmail = () => new HttpsError('permission-denied', 'Este e-mail não possui autorização. Entre em contato com o administrador.');
+export const rotafrotaManageTechnicians = onCall(async request => {
+  const uid = request.auth?.uid; signedIn(uid);
   const actorRef = db.doc(`rotafrota_members/${uid}`);
-  const anonymous = request.auth?.token.firebase?.sign_in_provider === 'anonymous';
   const authorize = (data: FirebaseFirestore.DocumentData | undefined) => {
-    try { return requireAccessManager(data, anonymous); }
+    try { return requireAccessManager(data, request.auth?.token.firebase?.sign_in_provider === 'anonymous'); }
     catch (e) { throw new HttpsError('permission-denied', (e as Error).message); }
   };
   const tenantId = authorize((await actorRef.get()).data());
-  const action = request.data?.action;
-  if (action === 'list') {
-    const members = await db.collection('rotafrota_members').where('tenantId', '==', tenantId).limit(201).get();
-    return { users: members.docs.slice(0, 200).map(d => ({ id: d.id, name: d.get('name') || '', email: d.get('email') || '', active: d.get('active') === true, manager: d.get('canManageTechnicians') === true })), truncated: members.size > 200 };
+  const base = `rotafrota_companies/${tenantId}`;
+  if (request.data?.action === 'list') {
+    const [members, permissions] = await Promise.all([db.collection('rotafrota_members').where('tenantId','==',tenantId).limit(201).get(), db.collection(`${base}/accessEmails`).limit(201).get()]);
+    const users = new Map<string, unknown>();
+    for (const d of permissions.docs) users.set(d.get('email'), {id:d.id, ...d.data(), registered: !!d.get('userId')});
+    for (const d of members.docs) users.set(d.get('email'), {id:d.id, userId:d.id, name:d.get('name') || '',email:d.get('email') || '',active:d.get('active') === true,manager:d.get('canManageTechnicians') === true,registered:true});
+    return {users:[...users.values()].slice(0,200), truncated:users.size > 200 || members.size > 200 || permissions.size > 200, currentUserId:uid};
   }
-  if (action !== 'create' && action !== 'setActive') throw new HttpsError('invalid-argument', 'Operação inválida.');
-  let targetId: string, email = '', name = '';
-  if (action === 'create') {
-    email = typeof request.data.email === 'string' ? request.data.email.trim().toLowerCase() : '';
-    name = typeof request.data.name === 'string' ? request.data.name.trim() : '';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || name.length < 2 || name.length > 100)
-      throw new HttpsError('invalid-argument', 'Informe nome e e-mail válidos.');
-    let account;
-    try { account = await getAuth().getUserByEmail(email); }
-    catch (error) {
-      if ((error as {code?: string}).code !== 'auth/user-not-found') throw error;
-      // The account holder sets their password through Firebase recovery; never expose a temporary password.
-      try { account = await getAuth().createUser({ email, displayName: name, password: randomBytes(32).toString('base64url') }); }
-      catch (creationError) {
-        if ((creationError as {code?: string}).code !== 'auth/email-already-exists') throw creationError;
-        account = await getAuth().getUserByEmail(email);
-      }
-    }
-    if (account.disabled) throw new HttpsError('failed-precondition', 'Esta conta está suspensa no provedor de autenticação.');
-    targetId = account.uid;
-  } else {
-    targetId = request.data.userId;
-    if (!identifier(targetId) || typeof request.data.active !== 'boolean') throw new HttpsError('invalid-argument', 'Acesso inválido.');
-  }
-  const targetRef = db.doc(`rotafrota_members/${targetId}`);
-  await db.runTransaction(async transaction => {
-    const [actor, target] = await Promise.all([transaction.get(actorRef), transaction.get(targetRef)]);
-    if (authorize(actor.data()) !== tenantId) throw new HttpsError('permission-denied', 'A empresa do administrador mudou.');
-    try { validateTechnicianTarget(uid, targetId, tenantId, target.data()); }
-    catch (e) { throw new HttpsError('permission-denied', (e as Error).message); }
-    if (action === 'create' && target.exists) throw new HttpsError('already-exists', 'Este e-mail já está cadastrado. Use a lista para ativar ou desativar.');
-    if (action === 'setActive' && !target.exists) throw new HttpsError('not-found', 'Técnico não encontrado.');
-    const next = action === 'create' ? { tenantId, name, email, company: actor.get('company'), role: 'technician', active: true, canManageTechnicians: false, createdAt: FieldValue.serverTimestamp() } : { active: request.data.active };
-    transaction.set(targetRef, {...next, updatedAt: FieldValue.serverTimestamp()}, {merge: true});
-    transaction.create(db.collection(`rotafrota_companies/${tenantId}/accessAudit`).doc(), {
-      actorId: uid, targetId, action, beforeActive: target.exists ? target.get('active') === true : null,
-      afterActive: action === 'create' ? true : request.data.active, at: FieldValue.serverTimestamp(),
-    });
+  if (request.data?.action !== 'authorize' && request.data?.action !== 'update') throw new HttpsError('invalid-argument','Atualize o aplicativo para gerenciar autorizações.');
+  const email = normalizedEmail(request.data.email), name = typeof request.data.name === 'string' ? request.data.name.trim() : '';
+  if (name.length < 2 || name.length > 100 || typeof request.data.manager !== 'boolean' || typeof request.data.active !== 'boolean') throw new HttpsError('invalid-argument','Confira nome, perfil e situação.');
+  let accountId: string | null = null;
+  try { accountId = (await getAuth().getUserByEmail(email)).uid; }
+  catch (e) { if ((e as {code?:string}).code !== 'auth/user-not-found') throw e; }
+  const allowRef = db.doc(`${base}/accessEmails/${emailKey(email)}`);
+  await db.runTransaction(async tx => {
+    const actor = await tx.get(actorRef);
+    if (authorize(actor.data()) !== tenantId) throw unauthorizedEmail();
+    const allow = await tx.get(allowRef);
+    const resolvedId = allow.get('userId') || accountId;
+    const memberRef = resolvedId ? db.doc(`rotafrota_members/${resolvedId}`) : null;
+    const member = memberRef ? await tx.get(memberRef) : null;
+    try { validateTechnicianTarget(uid,resolvedId ?? '',tenantId,member?.data()); }
+    catch (e) { throw new HttpsError('permission-denied',(e as Error).message); }
+    if (request.data.action === 'authorize' && (allow.exists || member?.exists)) throw new HttpsError('already-exists','E-mail já listado. Altere o perfil na lista.');
+    if (request.data.action === 'update' && !allow.exists && !member?.exists) throw new HttpsError('not-found','Autorização não encontrada.');
+    const next = {email,name,manager:request.data.manager,active:request.data.active,tenantId,company:actor.get('company'),userId:member?.exists ? resolvedId : null,updatedAt:FieldValue.serverTimestamp()};
+    tx.set(allowRef,next,{merge:true});
+    if (member?.exists && memberRef) tx.update(memberRef,{name,active:next.active,canManageTechnicians:next.manager,updatedAt:FieldValue.serverTimestamp()});
+    tx.create(db.collection(`${base}/accessAudit`).doc(),{actorId:uid,email,action:request.data.action,manager:next.manager,active:next.active,at:FieldValue.serverTimestamp()});
   });
-  return { userId: targetId };
+  return {ok:true};
+});
+// Signup never grants fleet access. The mailbox must be verified before activation.
+export const rotafrotaRegisterAccount = onCall(async request => {
+  const email = normalizedEmail(request.data?.email), tenantId = request.data?.tenantId, password = request.data?.password;
+  if (!identifier(tenantId)) throw unauthorizedEmail();
+  const allow = await db.doc(`rotafrota_companies/${tenantId}/accessEmails/${emailKey(email)}`).get();
+  if (!allow.exists || allow.get('active') !== true) throw unauthorizedEmail();
+  if (typeof password !== 'string' || password.length < 10 || password.length > 128) throw new HttpsError('invalid-argument','Use uma senha entre 10 e 128 caracteres.');
+  try { await getAuth().createUser({email,password,displayName:allow.get('name'),emailVerified:false}); }
+  catch (e) {
+    if ((e as {code?:string}).code === 'auth/email-already-exists') throw new HttpsError('already-exists','Este e-mail já possui conta. Entre com sua senha ou use Esqueci minha senha.');
+    if ((e as {code?:string}).code === 'auth/invalid-password') throw new HttpsError('invalid-argument','A senha não atende aos requisitos.');
+    throw new HttpsError('internal','Não foi possível criar a conta. Tente novamente.');
+  }
+  return {ok:true};
+});
+export const rotafrotaActivateAccount = onCall(async request => {
+  const uid = request.auth?.uid; signedIn(uid);
+  const email = normalizedEmail(request.auth?.token.email), tenantId = request.data?.tenantId;
+  if (!identifier(tenantId) || request.auth?.token.firebase?.sign_in_provider === 'anonymous') throw unauthorizedEmail();
+  const memberRef = db.doc(`rotafrota_members/${uid}`);
+  const allowRef = db.doc(`rotafrota_companies/${tenantId}/accessEmails/${emailKey(email)}`);
+  await db.runTransaction(async tx => {
+    const [member, allow] = await Promise.all([tx.get(memberRef),tx.get(allowRef)]);
+    // Preserve existing, administrator-provisioned accounts without changing their credentials.
+    if (member.exists) {
+      if (member.get('tenantId') !== tenantId || member.get('active') !== true) throw unauthorizedEmail();
+      return;
+    }
+    try { requireVerifiedAuthorization(allow.data(),uid,request.auth?.token.email_verified === true); }
+    catch (e) { throw new HttpsError('failed-precondition',(e as Error).message); }
+    tx.create(memberRef,{tenantId,email,name:allow.get('name'),company:allow.get('company'),role:'technician',active:true,canManageTechnicians:allow.get('manager') === true,createdAt:FieldValue.serverTimestamp()});
+    tx.update(allowRef,{userId:uid});
+    tx.create(db.collection(`rotafrota_companies/${tenantId}/accessAudit`).doc(),{actorId:uid,email,action:'activateAccount',at:FieldValue.serverTimestamp()});
+  });
+  return {ok:true};
 });

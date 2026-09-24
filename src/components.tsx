@@ -946,6 +946,8 @@ export function Login({
   onLogin: () => Promise<void>;
   error: string;
 }) {
+  const [creating, setCreating] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [message, setMessage] = useState(""),
@@ -976,10 +978,10 @@ export function Login({
       </div>
       <section className="login-panel">
         <LockKeyhole size={30} />
-        <h2>Acesso do técnico</h2>
+        <h2>{creating ? 'Criar conta' : 'Acesso ao painel'}</h2>
         <a className="area-switch" href="#/">Voltar para o motorista</a>
         <p>
-          Entre com seu e-mail e senha para ver viagens, fotos e relatórios.
+          {creating ? 'Use o e-mail autorizado pelo administrador. Você receberá uma confirmação para comprovar que o e-mail é seu.' : 'Entre com seu e-mail e senha para ver viagens, fotos e relatórios.'}
         </p>
         {api.isDemo && (
           <div className="info-note">
@@ -994,6 +996,13 @@ export function Login({
               setBusy(true);
               setMessage("");
               try {
+                if (creating) {
+                  if (password !== confirmPassword) throw new Error('As senhas não coincidem.');
+                  await api.registerAccount(email,password);
+                  setCreating(false); setPassword(''); setConfirmPassword('');
+                  setMessage('Conta criada! Confirme o e-mail recebido e depois entre com sua senha. Verifique também o spam.');
+                  return;
+                }
                 await api.login(email, password);
                 await onLogin();
               } catch (e) {
@@ -1016,19 +1025,24 @@ export function Login({
             <label>
               Senha
               <input
-                autoComplete="current-password"
+                autoComplete={creating ? 'new-password' : 'current-password'}
+                minLength={creating ? 10 : undefined}
+                maxLength={128}
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </label>
+            {creating && <label>Confirme a senha (mínimo 10 caracteres)<input type="password" autoComplete="new-password" required minLength={10} maxLength={128} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></label>}
             <button className="primary" disabled={busy}>
-              {busy ? "Entrando…" : "Entrar"}
+              {busy ? "Aguarde…" : creating ? 'Criar minha conta' : "Entrar"}
               <ChevronRight size={18} />
             </button>
           </form>
         }
+        {!api.isDemo && <button className="text-button" disabled={busy} onClick={() => {setCreating(!creating);setMessage('');setPassword('');setConfirmPassword('');}}>{creating ? 'Já tenho conta — entrar' : 'Criar conta'}</button>}
+        {!api.isDemo && <button className="text-button" disabled={busy} onClick={async () => {setBusy(true);setMessage('');try {await api.resendConfirmation(email,password);setMessage('Confirmação enviada. Verifique seu e-mail e o spam.');} catch(e) {setMessage(api.friendlyError(e));} finally {setBusy(false);}}}>Reenviar confirmação</button>}
         <button
           type="button"
           className="text-button"

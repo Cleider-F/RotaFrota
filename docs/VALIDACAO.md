@@ -15,3 +15,9 @@ firebase emulators:exec --only firestore,storage --project demo-rotafrota "npm r
 Os testes de regras são ignorados no npm test quando emuladores não estão ativos. Requer Java 21 para emuladores atuais. Smoke remoto: node scripts/smoke-firebase.mjs, somente após provisionar explicitamente a empresa de homologação; cria registros fictícios identificados nessa empresa.
 
 Senha real do técnico não foi usada nem alterada; a validação de login real deve ser feita pelo titular. Instalação PWA/câmera em celulares físicos e publicação nas lojas permanecem pendentes.
+
+Atualização de autorizações: 23 testes unitários passaram. Teste remoto isolado em rotafrota-homologacao validou e-mail não listado recusado, autorização sem criar conta, bloqueio de e-mail não confirmado, ativação com perfil vindo da autorização (tentativa de autopromoção ignorada), promoção, bloqueio de alteração do próprio acesso e revogação. Contas e permissões fictícias do teste foram removidas; auditorias técnicas permanecem na empresa de homologação. Nenhum e-mail foi enviado pelo teste. A entrega do e-mail de confirmação em uma caixa real deve ser validada pelo titular.
+
+## Exportação CSV
+
+O relatório controle-km-combustivel.csv respeita os filtros do painel e inclui o título CONTROLE DE KM E COMBUSTIVEL seguido das colunas DATA, HORÁRIO, Nº DA NOTA, KM INICIAL, KM FINAL, ABASTECIMENTO EM L, KM DE ABASTECIMENTO, KM TOTAL e NOME DO MOTORISTA. Cada linha representa uma viagem. Data/hora correspondem à saída, no fuso America/Sao_Paulo; litros são somados e múltiplos hodômetros de abastecimento aparecem separados por | na mesma célula. Km final/total ficam vazios para viagens abertas. CSV usa ponto e vírgula, decimais com vírgula e UTF-8 com BOM para acentos no Excel; o formato não suporta estilos visuais.

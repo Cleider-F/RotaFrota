@@ -33,12 +33,15 @@ Criar documentos de empresa e membros por canal administrativo confiável, nunca
 
 Antes de uma operação comercial, incluir controle de adesão de dispositivos, App Check/limites contra abuso, monitoramento e rotinas testadas de restauração. O projeto já utiliza faturamento habilitado; armazenamento, funções e leituras podem gerar cobranças conforme uso.
 
-## Gerenciar técnicos pelo painel
 
-Acesse Admin > Técnicos e acessos usando filho.cleider@gmail.com. Esse membro tem canManageTechnicians=true; os novos membros recebem false. O servidor deriva a empresa da sessão do administrador e não aceita transferência entre empresas nem alteração do próprio administrador por essa tela.
+## Autorizações e cadastro de contas
 
-Cadastre nome/e-mail e, na lista, clique em Enviar e-mail para definir senha. O envio só ocorre ao clicar; cadastrar por si só não envia mensagem. Contas existentes preservam a senha. Contas novas recebem uma senha aleatória não divulgada e o titular define sua senha pelo fluxo de recuperação do Firebase. Também pode usar Esqueci minha senha no login. Nenhuma senha é coletada no cadastro administrativo.
+Admin > Técnicos e acessos: autorizar nome, e-mail e perfil Administrador ou Apenas técnico. Autorizar não cria conta no Firebase Auth e não envia e-mail. A lista mostra Aguardando cadastro ou Conta cadastrada. É possível alterar o perfil e ativar/desativar outros acessos; ninguém pode alterar o próprio acesso, preservando um administrador ativo. Todas as alterações são transacionais e auditadas.
 
-Desativar muda apenas a permissão RotaFrota; não desativa a conta Firebase usada por outros sistemas, não apaga viagens nem desfaz arquivos já baixados. O servidor e as regras bloqueiam novas consultas protegidas. Dados já carregados na tela não podem ser recolhidos retroativamente. Reativar é possível pela mesma lista. Ações ficam registradas em accessAudit da empresa. A lista tem limite de 200 usuários e avisa se houver mais.
+Na tela de login, Criar conta recebe e-mail, senha (10–128 caracteres) e confirmação. rotafrotaRegisterAccount verifica a autorização ativa antes de criar a conta. O cliente envia a confirmação de e-mail pelo Firebase. O primeiro login chama rotafrotaActivateAccount: só um e-mail confirmado, ainda autorizado e vinculado à empresa correta ganha o documento de membro e as permissões correspondentes. O cadastro não aceita o perfil escolhido pelo usuário. Senhas nunca são registradas em documentos ou logs pela aplicação. Contas já existentes usam Entrar ou Esqueci minha senha; nunca redefinimos sua senha ao autorizar.
 
-Backend adicional: rotafrotaManageTechnicians. Reimplantar pelo codebase rotafrota. Não habilitar canManageTechnicians para técnicos comuns. A gestão de administradores permanece uma operação de provisionamento confiável.
+Contas administrativas provisionadas anteriormente permanecem válidas sem migração de senha. As autorizações novas ficam em rotafrota_companies/{empresa}/accessEmails/{sha256(emailNormalizado)}, inacessíveis diretamente aos clientes. Gestão por rotafrotaManageTechnicians, exigindo membro ativo com canManageTechnicians=true. Perfil Apenas técnico tem canManageTechnicians=false. A empresa vem da sessão do gestor, não do formulário.
+
+A confirmação enviada pelo cadastro só prova posse do e-mail; o acesso é liberado no login seguinte, após nova verificação da autorização. Desativar preserva conta Firebase, viagens e auditoria, bloqueando acesso futuro ao RotaFrota. Não remove arquivos já baixados ou dados já carregados. Lista limitada a 200 entradas com aviso. Novo cadastro está indisponível no modo demo.
+
+Backend: rotafrotaManageTechnicians, rotafrotaRegisterAccount, rotafrotaActivateAccount. Criar contas diretamente pela API pública do Firebase Auth não concede acesso à frota: documentos de membros só são criados pelas funções autorizadas. Controle adicional de abuso/App Check continua recomendado antes de escalar comercialmente.

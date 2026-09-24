@@ -1,3 +1,4 @@
+import { tripsToCsv } from "./trip-csv";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowDownLeft,
@@ -156,42 +157,15 @@ export default function AdminApp() {
     setFilter("all");
   };
   const exportCsv = () => {
-    const escape = (v: unknown) =>
-      `"${String(v ?? "")
-        .replace(/^[=+@\-\t\r]/, "'$&")
-        .replaceAll('"', '""')}"`;
-    const rows = [
-      [
-        "Motorista",
-        "Placa",
-        "Nota",
-        "Início",
-        "Status",
-        "Km registrados",
-        "Litros",
-        "Rendimento estimado km/L",
-      ],
-      ...visible.map((t) => [
-        t.driver,
-        t.plate,
-        t.invoice,
-        date(t.startedAt),
-        t.endedAt ? "Concluída" : "Em viagem",
-        distance(t),
-        totalLiters(t).toFixed(2).replace(".", ","),
-        estimatedEfficiency(t).value?.toFixed(2).replace(".", ",") ??
-          "Sem dados suficientes",
-      ]),
-    ];
     const a = document.createElement("a"),
       url = URL.createObjectURL(
         new Blob(
-          ["\ufeff" + rows.map((r) => r.map(escape).join(";")).join("\r\n")],
+          [tripsToCsv(visible)],
           { type: "text/csv;charset=utf-8" },
         ),
       );
     a.href = url;
-    a.download = "rotafrota-viagens.csv";
+    a.download = "controle-km-combustivel.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -884,3 +858,4 @@ function Metric({
     </section>
   );
 }
+

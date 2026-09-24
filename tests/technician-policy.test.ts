@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { requireAccessManager, validateTechnicianTarget } from '../src/technician-policy';
+import { requireAccessManager, validateTechnicianTarget, requireVerifiedAuthorization } from '../src/technician-policy';
 const manager = {tenantId:'company-a', role:'technician', active:true, canManageTechnicians:true};
 describe('gestão de técnicos', () => {
   it('autoriza somente administrador ativo autenticado', () => {
@@ -9,9 +9,16 @@ describe('gestão de técnicos', () => {
     }
     expect(() => requireAccessManager(manager, true)).toThrow();
   });
-  it('bloqueia autoalteração e alteração de outros administradores', () => {
+  it('bloqueia autoalteração e permite gerenciar outros administradores da empresa', () => {
     expect(() => validateTechnicianTarget('owner','owner','company-a',manager)).toThrow();
-    expect(() => validateTechnicianTarget('owner','other','company-a',manager)).toThrow();
+    expect(() => validateTechnicianTarget('owner','other','company-a',manager)).not.toThrow();
+  });
+  it('exige autorização ativa e confirmação do e-mail para ativar uma conta', () => {
+    expect(() => requireVerifiedAuthorization(undefined,'new',true)).toThrow('autorização');
+    expect(() => requireVerifiedAuthorization({active:false},'new',true)).toThrow('autorização');
+    expect(() => requireVerifiedAuthorization({active:true,userId:'other'},'new',true)).toThrow('autorização');
+    expect(() => requireVerifiedAuthorization({active:true},'new',false)).toThrow('Confirme');
+    expect(() => requireVerifiedAuthorization({active:true},'new',true)).not.toThrow();
   });
   it('bloqueia acesso cruzado entre empresas e papéis incompatíveis', () => {
     expect(() => validateTechnicianTarget('owner','other','company-a',{tenantId:'company-b',role:'technician'})).toThrow();

@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 import {
   collection,
@@ -59,7 +60,10 @@ export async function login(email: string, password: string) {
     sessionStorage.setItem(demoAdminKey, "true");
     return;
   }
-  await signInWithEmailAndPassword(fb.adminAuth, email, password);
+  await signInWithEmailAndPassword(fb.adminAuth, email.trim(), password);
+  try {
+    await httpsCallable(fb.functions, 'rotafrotaActivateAccount')({tenantId:fb.companyId});
+  } catch (error) { await signOut(fb.adminAuth); throw error; }
   if (!(await member())) {
     await signOut(fb.adminAuth);
     throw new Error("Esta conta não possui permissão para o painel técnico.");
@@ -408,6 +412,7 @@ export function subscribeDriver(
 }
 export function friendlyError(error: unknown): string {
   const e = error as { code?: string; message?: string };
+  if (e.code === 'functions/permission-denied') return e.message || 'Este e-mail não possui autorização. Entre em contato com o administrador.';
   if (e.code === "auth/invalid-credential")
     return "E-mail ou senha incorretos.";
   if (e.code === "auth/operation-not-allowed")
@@ -432,8 +437,28 @@ export function friendlyError(error: unknown): string {
   return e.message || "Não foi possível salvar. Tente novamente.";
 }
 
-export type TechnicianAccess = {id: string; name: string; email: string; active: boolean; manager: boolean};
-export async function manageTechnicians(data: {action: 'list' | 'create' | 'setActive'; name?: string; email?: string; userId?: string; active?: boolean}) {
-  if (isDemo) throw new Error('O cadastro de acessos está disponível somente na versão conectada ao Firebase.');
-  return (await httpsCallable<typeof data, {users?: TechnicianAccess[]; truncated?: boolean; userId?: string}>(fb.functions, 'rotafrotaManageTechnicians')(data)).data;
+
+export type TechnicianAccess = {id: string; userId?: string; name: string; email: string; active: boolean; manager: boolean; registered: boolean};
+export async function manageTechnicians(data: {action: 'list' | 'authorize' | 'update'; name?: string; email?: string; manager?: boolean; active?: boolean}) {
+  if (isDemo) throw new Error('A gestão de acessos está disponível somente na versão conectada ao Firebase.');
+  return (await httpsCallable<typeof data, {users?: TechnicianAccess[]; truncated?: boolean; currentUserId?: string}>(fb.functions, 'rotafrotaManageTechnicians')(data)).data;
+}
+export async function registerAccount(email: string, password: string) {
+  if (isDemo) throw new Error('Cadastro indisponível na demonstração.');
+  await httpsCallable(fb.functions, 'rotafrotaRegisterAccount')({email:email.trim(), password, tenantId:fb.companyId});
+  try {
+    const credential = await signInWithEmailAndPassword(fb.adminAuth,email.trim(),password);
+    fb.adminAuth.languageCode = 'pt';
+    await sendEmailVerification(credential.user);
+  } catch { throw new Error('Conta criada, mas a confirmação não foi enviada. Use Reenviar confirmação com seu e-mail e senha.'); }
+  finally { await signOut(fb.adminAuth); }
+}
+export async function resendConfirmation(email: string, password: string) {
+  if (isDemo) throw new Error('Indisponível na demonstração.');
+  try {
+    const credential = await signInWithEmailAndPassword(fb.adminAuth,email.trim(),password);
+    fb.adminAuth.languageCode = 'pt';
+    if (credential.user.emailVerified) throw new Error('E-mail já confirmado. Clique em Entrar.');
+    await sendEmailVerification(credential.user);
+  } finally { await signOut(fb.adminAuth); }
 }
