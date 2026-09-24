@@ -30,7 +30,7 @@ export default function TechniciansPanel() {
     <section className="access-card"><h2>Autorizar e-mail</h2><p>Autorize o e-mail e escolha o perfil. A pessoa criará sua conta pelo botão Criar conta na tela de acesso.</p>
       <form onSubmit={event => {event.preventDefault(); void run(async () => {
         await api.manageTechnicians({action: 'authorize', name, email, manager, active:true});
-        setMessage('E-mail autorizado. A pessoa já pode usar Criar conta na tela de acesso, escolher sua senha e confirmar o e-mail.');
+        setMessage('E-mail autorizado. A pessoa já pode usar Criar conta na tela de acesso, escolher sua senha e entrar imediatamente.');
         setName(''); setEmail(''); await refresh();
       });}}><fieldset disabled={busy || loading || api.isDemo}>
         <label>Nome completo<input required minLength={2} maxLength={100} value={name} onChange={e => setName(e.target.value)} autoComplete="off" /></label>
@@ -49,4 +49,5 @@ export default function TechniciansPanel() {
     </section>
   </div>;
 }
+
 

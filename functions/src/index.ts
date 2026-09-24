@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { createHash } from "node:crypto";
-import { requireAccessManager, validateTechnicianTarget, requireVerifiedAuthorization } from "../../src/technician-policy";
+import { requireAccessManager, validateTechnicianTarget, requireEmailAuthorization, validateSignupPassword } from "../../src/technician-policy";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -339,13 +339,13 @@ export const rotafrotaManageTechnicians = onCall(async request => {
   });
   return {ok:true};
 });
-// Signup never grants fleet access. The mailbox must be verified before activation.
+// Signup checks the email allowlist; activation applies its current role after sign-in.
 export const rotafrotaRegisterAccount = onCall(async request => {
   const email = normalizedEmail(request.data?.email), tenantId = request.data?.tenantId, password = request.data?.password;
   if (!identifier(tenantId)) throw unauthorizedEmail();
   const allow = await db.doc(`rotafrota_companies/${tenantId}/accessEmails/${emailKey(email)}`).get();
   if (!allow.exists || allow.get('active') !== true) throw unauthorizedEmail();
-  if (typeof password !== 'string' || password.length < 10 || password.length > 128) throw new HttpsError('invalid-argument','Use uma senha entre 10 e 128 caracteres.');
+  try { validateSignupPassword(password); } catch (e) { throw new HttpsError('invalid-argument',(e as Error).message); }
   try { await getAuth().createUser({email,password,displayName:allow.get('name'),emailVerified:false}); }
   catch (e) {
     if ((e as {code?:string}).code === 'auth/email-already-exists') throw new HttpsError('already-exists','Este e-mail já possui conta. Entre com sua senha ou use Esqueci minha senha.');
@@ -367,7 +367,7 @@ export const rotafrotaActivateAccount = onCall(async request => {
       if (member.get('tenantId') !== tenantId || member.get('active') !== true) throw unauthorizedEmail();
       return;
     }
-    try { requireVerifiedAuthorization(allow.data(),uid,request.auth?.token.email_verified === true); }
+    try { requireEmailAuthorization(allow.data(),uid); }
     catch (e) { throw new HttpsError('failed-precondition',(e as Error).message); }
     tx.create(memberRef,{tenantId,email,name:allow.get('name'),company:allow.get('company'),role:'technician',active:true,canManageTechnicians:allow.get('manager') === true,createdAt:FieldValue.serverTimestamp()});
     tx.update(allowRef,{userId:uid});
@@ -375,3 +375,4 @@ export const rotafrotaActivateAccount = onCall(async request => {
   });
   return {ok:true};
 });
+

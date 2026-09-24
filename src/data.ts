@@ -5,7 +5,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  sendEmailVerification,
 } from "firebase/auth";
 import {
   collection,
@@ -446,19 +445,5 @@ export async function manageTechnicians(data: {action: 'list' | 'authorize' | 'u
 export async function registerAccount(email: string, password: string) {
   if (isDemo) throw new Error('Cadastro indisponível na demonstração.');
   await httpsCallable(fb.functions, 'rotafrotaRegisterAccount')({email:email.trim(), password, tenantId:fb.companyId});
-  try {
-    const credential = await signInWithEmailAndPassword(fb.adminAuth,email.trim(),password);
-    fb.adminAuth.languageCode = 'pt';
-    await sendEmailVerification(credential.user);
-  } catch { throw new Error('Conta criada, mas a confirmação não foi enviada. Use Reenviar confirmação com seu e-mail e senha.'); }
-  finally { await signOut(fb.adminAuth); }
-}
-export async function resendConfirmation(email: string, password: string) {
-  if (isDemo) throw new Error('Indisponível na demonstração.');
-  try {
-    const credential = await signInWithEmailAndPassword(fb.adminAuth,email.trim(),password);
-    fb.adminAuth.languageCode = 'pt';
-    if (credential.user.emailVerified) throw new Error('E-mail já confirmado. Clique em Entrar.');
-    await sendEmailVerification(credential.user);
-  } finally { await signOut(fb.adminAuth); }
+  await login(email,password);
 }

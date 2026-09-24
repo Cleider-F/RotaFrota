@@ -11,7 +11,12 @@ export function validateTechnicianTarget(actorId: string, targetId: string, tena
   if (actorId === targetId) throw new Error('Você não pode alterar o próprio acesso.');
   if (target && target.role !== 'technician') throw new Error('Tipo de acesso incompatível.');
 }
-export function requireVerifiedAuthorization(permission: {active?: boolean; userId?: string | null} | undefined, uid: string, verified: boolean) {
+export function requireEmailAuthorization(permission: {active?: boolean; userId?: string | null} | undefined, uid: string) {
   if (!permission || permission.active !== true || (permission.userId && permission.userId !== uid)) throw new Error('Este e-mail não possui autorização. Entre em contato com o administrador.');
-  if (!verified) throw new Error('Confirme seu e-mail antes de entrar. Use o botão Reenviar confirmação.');
+
 }
+
+export function validateSignupPassword(password: unknown): asserts password is string {
+  if (typeof password !== 'string' || password.length < 6 || password.length > 128) throw new Error('Use uma senha entre 6 e 128 caracteres.');
+}
+

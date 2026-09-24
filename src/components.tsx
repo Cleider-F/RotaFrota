@@ -981,7 +981,7 @@ export function Login({
         <h2>{creating ? 'Criar conta' : 'Acesso ao painel'}</h2>
         <a className="area-switch" href="#/">Voltar para o motorista</a>
         <p>
-          {creating ? 'Use o e-mail autorizado pelo administrador. Você receberá uma confirmação para comprovar que o e-mail é seu.' : 'Entre com seu e-mail e senha para ver viagens, fotos e relatórios.'}
+          {creating ? 'Use o e-mail autorizado pelo administrador e escolha uma senha de pelo menos 6 caracteres.' : 'Entre com seu e-mail e senha para ver viagens, fotos e relatórios.'}
         </p>
         {api.isDemo && (
           <div className="info-note">
@@ -1000,7 +1000,7 @@ export function Login({
                   if (password !== confirmPassword) throw new Error('As senhas não coincidem.');
                   await api.registerAccount(email,password);
                   setCreating(false); setPassword(''); setConfirmPassword('');
-                  setMessage('Conta criada! Confirme o e-mail recebido e depois entre com sua senha. Verifique também o spam.');
+                  await onLogin();
                   return;
                 }
                 await api.login(email, password);
@@ -1026,7 +1026,7 @@ export function Login({
               Senha
               <input
                 autoComplete={creating ? 'new-password' : 'current-password'}
-                minLength={creating ? 10 : undefined}
+                minLength={creating ? 6 : undefined}
                 maxLength={128}
                 type="password"
                 required
@@ -1034,7 +1034,7 @@ export function Login({
                 onChange={(e) => setPassword(e.target.value)}
               />
             </label>
-            {creating && <label>Confirme a senha (mínimo 10 caracteres)<input type="password" autoComplete="new-password" required minLength={10} maxLength={128} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></label>}
+            {creating && <label>Confirme a senha (mínimo 6 caracteres)<input type="password" autoComplete="new-password" required minLength={6} maxLength={128} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></label>}
             <button className="primary" disabled={busy}>
               {busy ? "Aguarde…" : creating ? 'Criar minha conta' : "Entrar"}
               <ChevronRight size={18} />
@@ -1042,7 +1042,6 @@ export function Login({
           </form>
         }
         {!api.isDemo && <button className="text-button" disabled={busy} onClick={() => {setCreating(!creating);setMessage('');setPassword('');setConfirmPassword('');}}>{creating ? 'Já tenho conta — entrar' : 'Criar conta'}</button>}
-        {!api.isDemo && <button className="text-button" disabled={busy} onClick={async () => {setBusy(true);setMessage('');try {await api.resendConfirmation(email,password);setMessage('Confirmação enviada. Verifique seu e-mail e o spam.');} catch(e) {setMessage(api.friendlyError(e));} finally {setBusy(false);}}}>Reenviar confirmação</button>}
         <button
           type="button"
           className="text-button"
@@ -1076,3 +1075,4 @@ export function Login({
     </div>
   );
 }
+

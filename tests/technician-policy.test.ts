@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { requireAccessManager, validateTechnicianTarget, requireVerifiedAuthorization } from '../src/technician-policy';
+import { requireAccessManager, validateTechnicianTarget, requireEmailAuthorization, validateSignupPassword } from '../src/technician-policy';
 const manager = {tenantId:'company-a', role:'technician', active:true, canManageTechnicians:true};
 describe('gestão de técnicos', () => {
   it('autoriza somente administrador ativo autenticado', () => {
@@ -13,12 +13,11 @@ describe('gestão de técnicos', () => {
     expect(() => validateTechnicianTarget('owner','owner','company-a',manager)).toThrow();
     expect(() => validateTechnicianTarget('owner','other','company-a',manager)).not.toThrow();
   });
-  it('exige autorização ativa e confirmação do e-mail para ativar uma conta', () => {
-    expect(() => requireVerifiedAuthorization(undefined,'new',true)).toThrow('autorização');
-    expect(() => requireVerifiedAuthorization({active:false},'new',true)).toThrow('autorização');
-    expect(() => requireVerifiedAuthorization({active:true,userId:'other'},'new',true)).toThrow('autorização');
-    expect(() => requireVerifiedAuthorization({active:true},'new',false)).toThrow('Confirme');
-    expect(() => requireVerifiedAuthorization({active:true},'new',true)).not.toThrow();
+  it('exige autorização ativa e vínculo correto, sem confirmação de e-mail', () => {
+    expect(() => requireEmailAuthorization(undefined,'new')).toThrow('autorização');
+    expect(() => requireEmailAuthorization({active:false},'new')).toThrow('autorização');
+    expect(() => requireEmailAuthorization({active:true,userId:'other'},'new')).toThrow('autorização');
+    expect(() => requireEmailAuthorization({active:true},'new')).not.toThrow();
   });
   it('bloqueia acesso cruzado entre empresas e papéis incompatíveis', () => {
     expect(() => validateTechnicianTarget('owner','other','company-a',{tenantId:'company-b',role:'technician'})).toThrow();
@@ -28,4 +27,10 @@ describe('gestão de técnicos', () => {
     expect(() => validateTechnicianTarget('owner','new','company-a',undefined)).not.toThrow();
     expect(() => validateTechnicianTarget('owner','other','company-a',{...manager,canManageTechnicians:false,active:false})).not.toThrow();
   });
+});
+
+it('aceita senha a partir de 6 caracteres e rejeita limites inválidos', () => {
+  expect(() => validateSignupPassword('123456')).not.toThrow();
+  expect(() => validateSignupPassword('a'.repeat(128))).not.toThrow();
+  for (const password of ['12345','',null,'a'.repeat(129)]) expect(() => validateSignupPassword(password)).toThrow();
 });
