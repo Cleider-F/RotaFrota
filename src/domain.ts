@@ -5,6 +5,7 @@ export type Member = {
   name: string;
   company: string;
   role: Role;
+  canManageTechnicians?: boolean;
 };
 export type Vehicle = { id: string; plate: string; name: string; fuel: string };
 export type Fill = {

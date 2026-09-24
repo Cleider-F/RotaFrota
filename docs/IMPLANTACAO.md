@@ -32,3 +32,13 @@ O workflow GitHub Pages publica demonstração com dados fictícios. A hospedage
 Criar documentos de empresa e membros por canal administrativo confiável, nunca pelo navegador do motorista. Cada membro técnico tem tenantId, role=technician e active=true. Criar o usuário no Firebase Auth separadamente. Para outra empresa, configurar VITE_COMPANY_ID e preparar o fluxo de distribuição. Motoristas recebem somente o endereço inicial; técnicos recebem /#/admin.
 
 Antes de uma operação comercial, incluir controle de adesão de dispositivos, App Check/limites contra abuso, monitoramento e rotinas testadas de restauração. O projeto já utiliza faturamento habilitado; armazenamento, funções e leituras podem gerar cobranças conforme uso.
+
+## Gerenciar técnicos pelo painel
+
+Acesse Admin > Técnicos e acessos usando filho.cleider@gmail.com. Esse membro tem canManageTechnicians=true; os novos membros recebem false. O servidor deriva a empresa da sessão do administrador e não aceita transferência entre empresas nem alteração do próprio administrador por essa tela.
+
+Cadastre nome/e-mail e, na lista, clique em Enviar e-mail para definir senha. O envio só ocorre ao clicar; cadastrar por si só não envia mensagem. Contas existentes preservam a senha. Contas novas recebem uma senha aleatória não divulgada e o titular define sua senha pelo fluxo de recuperação do Firebase. Também pode usar Esqueci minha senha no login. Nenhuma senha é coletada no cadastro administrativo.
+
+Desativar muda apenas a permissão RotaFrota; não desativa a conta Firebase usada por outros sistemas, não apaga viagens nem desfaz arquivos já baixados. O servidor e as regras bloqueiam novas consultas protegidas. Dados já carregados na tela não podem ser recolhidos retroativamente. Reativar é possível pela mesma lista. Ações ficam registradas em accessAudit da empresa. A lista tem limite de 200 usuários e avisa se houver mais.
+
+Backend adicional: rotafrotaManageTechnicians. Reimplantar pelo codebase rotafrota. Não habilitar canManageTechnicians para técnicos comuns. A gestão de administradores permanece uma operação de provisionamento confiável.

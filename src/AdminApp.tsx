@@ -33,7 +33,8 @@ import {
   type Vehicle,
 } from "./domain";
 import { TripModal, VehicleModal, Login } from "./components";
-type Page = "overview" | "trips" | "vehicles" | "settings";
+import TechniciansPanel from "./TechniciansPanel";
+type Page = "overview" | "trips" | "vehicles" | "settings" | "technicians";
 export default function AdminApp() {
   const [who, setWho] = useState<Member | null>(null),
     [ready, setReady] = useState(false);
@@ -228,6 +229,7 @@ export default function AdminApp() {
         </div>
         <p className="nav-label">OPERAÇÃO</p>
         <nav aria-label="Navegação principal">
+          {who.canManageTechnicians && <button className={page === 'technicians' ? 'selected' : ''} onClick={() => nav('technicians')}><ShieldCheck size={19} />Técnicos e acessos</button>}
           {tech && (
             <>
               <button
@@ -309,6 +311,7 @@ export default function AdminApp() {
                   trips: "Viagens",
                   vehicles: "Veículos",
                   settings: "Aplicativo",
+                  technicians: "Técnicos e acessos",
                 }[page]
               }
             </strong>
@@ -355,6 +358,7 @@ export default function AdminApp() {
                     trips: "Cada viagem, em detalhe.",
                     vehicles: "Veículos da frota.",
                     settings: "Seu aplicativo, onde estiver.",
+                    technicians: "Quem cuida da sua frota.",
                   }[page]
                 }
               </h1>
@@ -366,6 +370,7 @@ export default function AdminApp() {
                     trips: "Do primeiro quilômetro à última evidência.",
                     vehicles: "Os veículos que movimentam sua operação.",
                     settings: "Instale no celular e acompanhe sua operação.",
+                    technicians: "Cadastre técnicos e gerencie as permissões de acesso.",
                   }[page]
                 }
               </p>
@@ -689,6 +694,7 @@ export default function AdminApp() {
               </div>
             </section>
           )}
+          {page === 'technicians' && who.canManageTechnicians && <TechniciansPanel />}
           {page === "vehicles" && (
             <div className="vehicle-grid">
               {vehicles.map((v) => {

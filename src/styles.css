@@ -2181,3 +2181,18 @@ td {
 .area-switch[aria-disabled="true"] { opacity: .5; cursor: wait; }
 .login-panel > .area-switch { margin: 0 0 16px; }
 @media (max-width: 600px) { .topbar { flex-wrap: wrap; gap: 10px; height: auto; min-height: 76px; padding-top: 12px; padding-bottom: 12px; } .topbar .breadcrumb { display: none; } .driver-header { gap: 12px; } .driver-header .area-switch { padding: 10px; font-size: 13px; } }
+.technicians-panel { display: grid; gap: 24px; }
+.access-card { background: white; border: 1px solid #e1e7e3; border-radius: 18px; padding: 24px; }
+.access-card h2 { margin: 0 0 10px; font-size: 21px; }
+.access-card p { line-height: 1.6; color: #586f65; }
+.access-card fieldset { border: 0; padding: 0; margin: 20px 0 0; display: flex; align-items: end; flex-wrap: wrap; gap: 16px; }
+.access-card label { display: grid; gap: 8px; flex: 1; min-width: 200px; font-weight: 600; }
+.access-card input { min-height: 48px; width: 100%; box-sizing: border-box; border: 1px solid #ccd9d0; border-radius: 9px; padding: 12px; font: inherit; }
+.access-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.access-list { list-style: none; margin: 20px 0 0; padding: 0; }
+.access-list li { padding: 18px 0; border-top: 1px solid #e1e7e3; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; }
+.access-list span, .access-list small { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+.access-list small { color: #5a7466; }
+.access-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.access-confirm { padding: 18px; border: 1px solid #cbdcc5; border-radius: 12px; background: #f3f8ef; margin-top: 18px; }
+.access-confirm button { margin-right: 10px; }

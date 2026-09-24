@@ -39,6 +39,7 @@ export const demoMember: Member = {
   name: "Técnico de demonstração",
   company: "Transportadora Horizonte",
   role: "technician",
+  canManageTechnicians: true,
 };
 const demoDriver: Member = {
   ...demoMember,
@@ -74,6 +75,7 @@ export async function logout() {
 export async function resetPassword(email: string) {
   if (isDemo) throw new Error("Na demonstração, use a senha exibida acima.");
   if (!email.trim()) throw new Error("Digite seu e-mail no campo acima.");
+  fb.adminAuth.languageCode = "pt";
   await sendPasswordResetEmail(fb.adminAuth, email.trim());
 }
 export function watchAdmin(callback: () => void) {
@@ -105,6 +107,7 @@ export async function member(): Promise<Member | null> {
     name: data.name,
     company: data.company,
     role: "technician",
+    canManageTechnicians: data.canManageTechnicians === true,
   };
   return currentAdmin;
 }
@@ -427,4 +430,10 @@ export function friendlyError(error: unknown): string {
   if (e.code?.includes("network"))
     return "Sem conexão. Seus dados ainda não foram enviados. Tente novamente.";
   return e.message || "Não foi possível salvar. Tente novamente.";
+}
+
+export type TechnicianAccess = {id: string; name: string; email: string; active: boolean; manager: boolean};
+export async function manageTechnicians(data: {action: 'list' | 'create' | 'setActive'; name?: string; email?: string; userId?: string; active?: boolean}) {
+  if (isDemo) throw new Error('O cadastro de acessos está disponível somente na versão conectada ao Firebase.');
+  return (await httpsCallable<typeof data, {users?: TechnicianAccess[]; truncated?: boolean; userId?: string}>(fb.functions, 'rotafrotaManageTechnicians')(data)).data;
 }
