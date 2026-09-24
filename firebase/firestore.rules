@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function tech(company) {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && exists(/databases/$(database)/documents/rotafrota_members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/rotafrota_members/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/rotafrota_members/$(request.auth.uid)).data.role == 'technician'
+        && get(/databases/$(database)/documents/rotafrota_members/$(request.auth.uid)).data.tenantId == company;
+    }
+    function driver(company) {
+      return request.auth != null && exists(/databases/$(database)/documents/rotafrota_companies/$(company)/drivers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/rotafrota_companies/$(company)/drivers/$(request.auth.uid)).data.active == true;
+    }
+    match /rotafrota_members/{uid} { allow get: if request.auth != null && request.auth.uid == uid; }
+    match /rotafrota_companies/{company} {
+      allow get: if tech(company);
+      match /trips/{trip} {
+        allow read: if tech(company) || (driver(company) && resource.data.driverId == request.auth.uid);
+        match /audit/{entry} { allow read: if tech(company); }
+      }
+      match /vehicles/{vehicle} { allow read: if tech(company); }
+    }
+    // All writes go through validated callable Functions, including audit and roles.
+    // Preserve pre-existing behavior outside this application's namespace.
+    match /{legacyCollection}/{remaining=**} {
+      allow read, write: if !(legacyCollection in ['rotafrota_members', 'rotafrota_companies']);
+    }
+  }
+}

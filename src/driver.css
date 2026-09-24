@@ -1,0 +1,484 @@
+.driver-app {
+  min-height: 100dvh;
+  background: #f3f6f4;
+  color: #203e34;
+}
+.driver-header {
+  height: 86px;
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.driver-area-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: #4b6c5d;
+  background: #e5eee4;
+  padding: 9px 12px;
+  border-radius: 6px;
+}
+.driver-main {
+  max-width: 620px;
+  margin: auto;
+  padding: 12px 22px 40px;
+}
+.driver-demo {
+  font-size: 13px;
+  color: #705828;
+  background: #faf1db;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin: 0 0 25px;
+  line-height: 1.6;
+}
+.driver-intro {
+  margin: 24px 0 27px;
+}
+.driver-kicker {
+  font-size: 12px;
+  letter-spacing: 1.8px;
+  font-weight: 700;
+  color: #698b64;
+}
+.driver-intro h1 {
+  font-size: 32px;
+  line-height: 1.3;
+  margin: 10px 0 12px;
+  letter-spacing: -1px;
+}
+.driver-intro > p {
+  font-size: 17px;
+  line-height: 1.65;
+  color: #62756a;
+}
+.driver-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.driver-form-card {
+  border: 1px solid #dfe8e1;
+  background: white;
+  padding: 26px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.driver-form-card h2 {
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1.4;
+}
+.driver-form-card h2 > span {
+  display: grid;
+  place-items: center;
+  background: #edf4e7;
+  border-radius: 50%;
+  width: 31px;
+  height: 31px;
+  font-size: 15px;
+  flex-shrink: 0;
+  color: #4a6f37;
+}
+.driver-form label {
+  font-size: 16px;
+  font-weight: 650;
+  gap: 10px;
+}
+.driver-form input {
+  min-height: 58px;
+  font-size: 19px;
+  font-weight: 450;
+  padding: 14px;
+  border-radius: 9px;
+  min-width: 0;
+  width: 100%;
+  background: #fcfdfb;
+  border-color: #cddbd0;
+}
+.driver-form input::placeholder {
+  font-size: 16px;
+  color: #809087;
+}
+.driver-help {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #63766a;
+}
+.driver-number {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.driver-number input {
+  padding-right: 57px;
+}
+.driver-number > span {
+  position: absolute;
+  right: 16px;
+  color: #69806e;
+  font-size: 14px;
+  font-weight: 500;
+}
+.driver-photo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.driver-photo-target {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  min-height: 184px;
+  padding: 22px 14px;
+  border: 2px dashed #9db696;
+  border-radius: 12px;
+  background: #f5faef;
+  cursor: pointer;
+  text-align: center;
+  color: #3a633c;
+  overflow: hidden;
+}
+.driver-photo-target > b {
+  font-size: 16px;
+}
+.driver-photo-target > small {
+  font-size: 13px;
+  font-weight: 400;
+  color: #657a5d;
+  line-height: 1.6;
+}
+.driver-photo-target input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.driver-photo-target:focus-within {
+  outline: 3px solid #386744;
+  outline-offset: 3px;
+}
+.driver-photo-target img {
+  max-height: 180px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+.driver-photo-target > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.has-photo .driver-photo-target {
+  border-style: solid;
+  background: #eff7e9;
+}
+.driver-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  background: #24513c;
+  color: white;
+  border-radius: 11px;
+  min-height: 64px;
+  font-size: 18px;
+  font-weight: 650;
+  padding: 16px 20px;
+  border: 1px solid #24513c;
+  white-space: normal;
+}
+.driver-primary:hover {
+  background: #193c2b;
+}
+.driver-submit > p {
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.7;
+  margin: 12px 6px 0;
+  color: #6f7c70;
+}
+.driver-trip-card {
+  background: white;
+  border: 1px solid #dfe8e1;
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.driver-trip-card > svg {
+  color: #628658;
+  flex-shrink: 0;
+}
+.driver-trip-card b {
+  font-size: 24px;
+  font-family: "Manrope Variable", sans-serif;
+  letter-spacing: 0.5px;
+}
+.driver-trip-card p {
+  font-size: 15px;
+  margin: 7px 0;
+  color: #536b59;
+}
+.driver-trip-card small {
+  font-size: 14px;
+  color: #6a7d6e;
+}
+.driver-status {
+  font-size: 12px;
+  margin-left: auto;
+  white-space: nowrap;
+  color: #4c6f32;
+  background: #edf5df;
+  border-radius: 6px;
+  padding: 7px;
+}
+.driver-big-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.driver-action {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  text-align: left;
+  border-radius: 15px;
+  padding: 24px 22px;
+  min-height: 114px;
+  border: 1px solid #d6e2d0;
+  width: 100%;
+}
+.driver-action.fuel {
+  background: #24513c;
+  color: white;
+  border-color: #24513c;
+}
+.driver-action.finish {
+  background: white;
+  color: #24513c;
+}
+.driver-action > span:nth-child(2) {
+  flex: 1;
+}
+.driver-action b {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 7px;
+}
+.driver-action small {
+  display: block;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+.driver-action.fuel small {
+  color: #dfeddb;
+}
+.driver-action.finish small {
+  color: #647c63;
+}
+.action-symbol {
+  height: 48px;
+  width: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.driver-support {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #647764;
+  margin: 20px 5px;
+}
+.driver-back {
+  min-height: 48px;
+  font-size: 15px;
+  padding: 10px 0;
+  color: #486848;
+}
+.driver-form-context {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: #e8f0e2;
+  border-radius: 10px;
+  font-size: 15px;
+  flex-wrap: wrap;
+}
+.driver-form-context > span {
+  margin-left: auto;
+}
+.driver-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  background: #e5f2db;
+  border: 1px solid #c4dfb0;
+  border-radius: 13px;
+  padding: 20px;
+  color: #345c28;
+  margin: 18px 0;
+}
+.driver-success > svg {
+  flex-shrink: 0;
+}
+.driver-success b {
+  font-size: 17px;
+  line-height: 1.6;
+}
+.driver-success p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.driver-error,
+.driver-notice {
+  padding: 19px;
+  background: #fff1e8;
+  border: 1px solid #ebc5ad;
+  border-radius: 12px;
+  color: #85401d;
+  margin: 15px 0;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.driver-error p {
+  margin: 8px 0 15px;
+}
+.driver-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.driver-receipts {
+  border-top: 1px solid #dce5da;
+  padding-top: 23px;
+  margin-top: 28px;
+}
+.driver-receipts h2 {
+  font-size: 17px;
+  margin-bottom: 16px;
+}
+.driver-receipts p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 12px 0;
+  color: #5c7755;
+  line-height: 1.6;
+}
+.driver-footer {
+  text-align: center;
+  font-size: 13px;
+  color: #72846e;
+  margin-top: 40px;
+  line-height: 1.8;
+}
+.driver-footer p {
+  font-size: 12px;
+  margin-top: 7px;
+}
+.driver-loading {
+  padding: 60px 10px;
+  text-align: center;
+  font-size: 17px;
+}
+.driver-form fieldset:disabled {
+  opacity: 0.65;
+}
+.driver-form fieldset:disabled .driver-photo-target {
+  pointer-events: none;
+}
+@media (max-width: 600px) {
+  .driver-header {
+    height: 76px;
+    padding: 16px 20px;
+  }
+  .driver-header .brand {
+    font-size: 24px;
+  }
+  .driver-area-label {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .driver-main {
+    padding: 8px 17px 32px;
+  }
+  .driver-intro h1 {
+    font-size: 28px;
+  }
+  .driver-form-card {
+    padding: 23px 19px;
+    border-radius: 13px;
+  }
+  .driver-action {
+    padding: 23px 17px;
+    gap: 12px;
+  }
+  .driver-action b {
+    font-size: 18px;
+  }
+  .driver-action > svg {
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .driver-action small {
+    font-size: 14px;
+  }
+  .driver-trip-card {
+    padding: 19px 15px;
+    gap: 12px;
+  }
+  .driver-trip-card b {
+    font-size: 22px;
+  }
+  .driver-status {
+    font-size: 11px;
+  }
+  .driver-photo-target > b {
+    font-size: 15px;
+  }
+  .driver-primary {
+    font-size: 17px;
+    min-height: 66px;
+  }
+  .driver-help {
+    font-size: 14px;
+  }
+  .driver-form label {
+    font-size: 16px;
+  }
+  .driver-form input {
+    font-size: 20px;
+  }
+  .driver-form-card h2 {
+    font-size: 18px;
+  }
+  .driver-intro {
+    margin-top: 22px;
+  }
+}

@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function tech(company) {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && firestore.exists(/databases/(default)/documents/rotafrota_members/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/rotafrota_members/$(request.auth.uid)).data.active == true
+        && firestore.get(/databases/(default)/documents/rotafrota_members/$(request.auth.uid)).data.role == 'technician'
+        && firestore.get(/databases/(default)/documents/rotafrota_members/$(request.auth.uid)).data.tenantId == company;
+    }
+    function driver(company) {
+      return request.auth != null && firestore.exists(/databases/(default)/documents/rotafrota_companies/$(company)/drivers/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/rotafrota_companies/$(company)/drivers/$(request.auth.uid)).data.active == true;
+    }
+    match /rotafrota/{company}/{owner}/{file} {
+      allow read: if tech(company) || (driver(company) && request.auth.uid == owner);
+      allow create: if resource == null && request.auth != null && request.auth.uid == owner && (tech(company) || driver(company))
+        && file.matches('[a-zA-Z0-9_-]+[.]jpg') && request.resource.size > 0 && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg';
+      // Evidence cannot be overwritten or deleted by app users.
+    }
+    // Existing objects outside RotaFrota keep their previous access policy.
+    match /{legacyRoot}/{remaining=**} { allow read, write: if legacyRoot != 'rotafrota'; }
+  }
+}
